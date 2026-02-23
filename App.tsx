@@ -11,24 +11,30 @@ import {
 } from './types';
 import { 
   PROMPT_TEMPLATES, 
-  MODEL_OPTIONS, 
   ASPECT_RATIOS 
 } from './constants';
 import { generateProductImage } from './services/geminiService';
 
+interface User {
+  name: string;
+  email?: string;
+  picture?: string;
+}
+
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'workspace' | 'gallery'>('workspace');
+  const [user, setUser] = useState<User | null>(null);
   const [state, setState] = useState<AppState>({
     history: [],
     isGenerating: false,
     uploadedImage: null,
     uploadedFile: null,
     config: {
-      model: ModelId.FLASH,
+      model: ModelId.PRO,
       aspectRatio: AspectRatio.SQUARE,
       resolution: '1024x1024',
     },
-    prompt: '',
+    prompt: PROMPT_TEMPLATES[0].prompt,
     usage: {
       dailyTokens: 0,
       totalTokens: 0,
@@ -37,6 +43,27 @@ const App: React.FC = () => {
 
   const [selectedRecord, setSelectedRecord] = useState<GenerationRecord | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Auth listener
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
+        setUser(event.data.user);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const handleLogin = async () => {
+    try {
+      const response = await fetch('/api/auth/url');
+      const { url } = await response.json();
+      window.open(url, 'google_oauth', 'width=500,height=600');
+    } catch (error) {
+      console.error('Login failed', error);
+    }
+  };
 
   // Load history from local storage on mount
   useEffect(() => {
@@ -132,6 +159,32 @@ const App: React.FC = () => {
     }));
   };
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-surface border border-border rounded-3xl p-8 text-center space-y-8 shadow-2xl">
+          <div className="size-20 bg-primary rounded-2xl flex items-center justify-center mx-auto shadow-xl shadow-primary/20">
+            <span className="material-symbols-outlined text-white text-4xl">camera</span>
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-black tracking-tight">Shot AI</h1>
+            <p className="text-slate-400">Professional product photography, powered by AI.</p>
+          </div>
+          <button 
+            onClick={handleLogin}
+            className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-slate-200 transition-all"
+          >
+            <img src="https://www.google.com/favicon.ico" className="size-5" alt="Google" />
+            Continue with Google
+          </button>
+          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+            Secure Enterprise Login
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Layout 
       activeTab={activeTab} 
@@ -141,13 +194,13 @@ const App: React.FC = () => {
       {activeTab === 'workspace' ? (
         <div className="flex h-full flex-col lg:flex-row">
           {/* Main Area */}
-          <div className="flex-1 p-8 space-y-8 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 overflow-y-auto custom-scrollbar">
             {/* Image Upload Zone */}
             <section>
               <div 
                 onClick={() => fileInputRef.current?.click()}
                 className={`relative group flex flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${
-                  state.uploadedImage ? 'border-primary bg-primary/5 p-4' : 'border-border bg-surface py-20 px-10 hover:border-primary/50'
+                  state.uploadedImage ? 'border-primary bg-primary/5 p-4' : 'border-border bg-surface py-12 lg:py-20 px-4 lg:px-10 hover:border-primary/50'
                 }`}
               >
                 {state.uploadedImage ? (
@@ -159,11 +212,11 @@ const App: React.FC = () => {
                   </div>
                 ) : (
                   <>
-                    <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                      <span className="material-symbols-outlined text-primary text-3xl">upload_file</span>
+                    <div className="size-12 lg:size-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                      <span className="material-symbols-outlined text-primary text-2xl lg:text-3xl">upload_file</span>
                     </div>
-                    <h3 className="text-xl font-bold mb-1">Drop Product Photo</h3>
-                    <p className="text-slate-400 text-sm mb-6 text-center max-w-sm">
+                    <h3 className="text-lg lg:text-xl font-bold mb-1 text-center">Drop Product Photo</h3>
+                    <p className="text-slate-400 text-xs lg:text-sm mb-6 text-center max-w-sm">
                       Upload your high-res product image (PNG/JPG).
                     </p>
                     <button className="px-6 py-2.5 bg-primary text-white rounded-lg font-bold text-sm shadow-lg shadow-primary/20">
@@ -181,44 +234,37 @@ const App: React.FC = () => {
               </div>
             </section>
 
-            {/* Prompt Studio */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Prompt Studio</h3>
-                <button 
-                  onClick={() => setState(prev => ({ ...prev, prompt: '' }))}
-                  className="text-slate-500 hover:text-white text-xs flex items-center gap-1 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-sm">refresh</span>
-                  Reset
-                </button>
-              </div>
-              <div className="bg-surface rounded-xl border border-border p-1 overflow-hidden shadow-xl ring-1 ring-white/5">
-                <div className="flex flex-col">
-                  <textarea 
-                    value={state.prompt}
-                    onChange={(e) => setState(prev => ({ ...prev, prompt: e.target.value }))}
-                    className="w-full bg-transparent border-0 focus:ring-0 text-white placeholder:text-slate-600 p-4 min-h-[100px] text-lg leading-relaxed resize-none" 
-                    placeholder="Describe the new scene... e.g. 'on a luxury marble pedestal with soft window lighting'"
-                  ></textarea>
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-b-lg border-t border-border">
-                    <div className="flex gap-2">
-                      <button className="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-primary/10" title="Enhance prompt">
-                        <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
-                      </button>
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase">
-                      {state.prompt.length} / 500 chars
-                    </span>
+            {/* Loading Progress */}
+            {state.isGenerating && (
+              <div className="bg-surface border border-border rounded-2xl p-8 flex flex-col items-center justify-center space-y-6 animate-in fade-in zoom-in duration-300">
+                <div className="relative size-24">
+                  <div className="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-3xl animate-pulse">auto_fix_high</span>
                   </div>
                 </div>
+                <div className="text-center space-y-2">
+                  <h3 className="text-xl font-bold">Generating Masterpiece</h3>
+                  <p className="text-slate-400 text-sm">AI is relighting your product for the perfect scene...</p>
+                </div>
+                <div className="w-full max-w-md bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-primary h-full animate-[progress_20s_ease-in-out_infinite]"></div>
+                </div>
+                <style>{`
+                  @keyframes progress {
+                    0% { width: 0%; }
+                    50% { width: 70%; }
+                    100% { width: 95%; }
+                  }
+                `}</style>
               </div>
-            </section>
+            )}
 
             {/* Prompt Templates */}
             <section className="space-y-4">
               <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Quick Templates</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {PROMPT_TEMPLATES.map(template => (
                   <button
                     key={template.id}
@@ -229,7 +275,7 @@ const App: React.FC = () => {
                   >
                     <img src={template.previewUrl} className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all" alt={template.name} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent flex flex-col justify-end p-3">
-                      <span className="text-[10px] font-bold text-white uppercase">{template.name}</span>
+                      <span className="text-[10px] font-bold text-white uppercase truncate">{template.name}</span>
                     </div>
                   </button>
                 ))}
@@ -238,76 +284,65 @@ const App: React.FC = () => {
           </div>
 
           {/* Config Sidebar */}
-          <aside className="w-full lg:w-80 border-l border-border bg-surface p-6 flex flex-col shrink-0 overflow-y-auto custom-scrollbar">
-            <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">tune</span>
-              Settings
-            </h3>
-            
-            <div className="space-y-8 flex-1">
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Model</label>
-                <div className="space-y-2">
-                  {MODEL_OPTIONS.map(model => (
-                    <button
-                      key={model.id}
-                      onClick={() => setConfig('model', model.id)}
-                      className={`w-full text-left p-3 rounded-xl border transition-all ${
-                        state.config.model === model.id 
-                          ? 'border-primary bg-primary/10 ring-1 ring-primary' 
-                          : 'border-border bg-background hover:border-slate-600'
-                      }`}
+          <aside className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l border-border bg-surface flex flex-col shrink-0 lg:overflow-y-auto custom-scrollbar relative">
+            <div className="p-6 flex-1 space-y-8 pb-32">
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px]">tune</span>
+                Settings
+              </h3>
+              
+              <div className="space-y-6">
+                {/* Prompt Studio moved here */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Prompt Studio</label>
+                    <button 
+                      onClick={() => setState(prev => ({ ...prev, prompt: '' }))}
+                      className="text-slate-500 hover:text-white text-[10px] flex items-center gap-1 transition-colors uppercase font-bold"
                     >
-                      <div className="text-xs font-bold text-white">{model.name}</div>
-                      <div className="text-[10px] text-slate-500 uppercase">{model.desc}</div>
+                      <span className="material-symbols-outlined text-xs">refresh</span>
+                      Reset
                     </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Aspect Ratio</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {ASPECT_RATIOS.map(ratio => (
-                    <button
-                      key={ratio.id}
-                      onClick={() => setConfig('aspectRatio', ratio.id)}
-                      className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all ${
-                        state.config.aspectRatio === ratio.id 
-                          ? 'border-primary bg-primary/10 text-primary' 
-                          : 'border-border bg-background text-slate-500 hover:border-slate-600'
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-lg mb-1">{ratio.icon}</span>
-                      <span className="text-[10px] font-bold">{ratio.id}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-6 border-t border-border">
-                 <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-semibold">High Resolution</span>
-                      <span className="text-[9px] text-slate-500 uppercase">2048px Upscaling</span>
+                  </div>
+                  <div className="bg-background rounded-xl border border-border p-1 overflow-hidden shadow-xl ring-1 ring-white/5">
+                    <textarea 
+                      value={state.prompt}
+                      onChange={(e) => setState(prev => ({ ...prev, prompt: e.target.value }))}
+                      className="w-full bg-transparent border-0 focus:ring-0 text-white placeholder:text-slate-600 p-4 min-h-[120px] text-sm leading-relaxed resize-none" 
+                      placeholder="Describe the new scene..."
+                    ></textarea>
+                    <div className="flex items-center justify-end p-2 bg-white/5 rounded-b-lg border-t border-border">
+                      <span className="text-[9px] font-bold text-slate-500 uppercase">
+                        {state.prompt.length} / 500
+                      </span>
                     </div>
-                    <button className="w-10 h-5 bg-primary rounded-full relative">
-                      <div className="absolute right-1 top-1 size-3 bg-white rounded-full"></div>
-                    </button>
-                 </div>
-                 <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-semibold">Content Aware</span>
-                      <span className="text-[9px] text-slate-500 uppercase">Smart Relighting</span>
-                    </div>
-                    <button className="w-10 h-5 bg-slate-800 rounded-full relative">
-                      <div className="absolute left-1 top-1 size-3 bg-slate-400 rounded-full"></div>
-                    </button>
-                 </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Aspect Ratio</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {ASPECT_RATIOS.map(ratio => (
+                      <button
+                        key={ratio.id}
+                        onClick={() => setConfig('aspectRatio', ratio.id)}
+                        className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all ${
+                          state.config.aspectRatio === ratio.id 
+                            ? 'border-primary bg-primary/10 text-primary' 
+                            : 'border-border bg-background text-slate-500 hover:border-slate-600'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-lg mb-1">{ratio.icon}</span>
+                        <span className="text-[10px] font-bold">{ratio.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="pt-8">
+            {/* Pinned Generate Button */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 bg-surface border-t border-border backdrop-blur-xl">
               <button 
                 disabled={state.isGenerating || !state.uploadedImage || !state.prompt}
                 onClick={handleGenerate}
@@ -321,7 +356,7 @@ const App: React.FC = () => {
                 {state.isGenerating ? 'GENERATING...' : 'GENERATE PHOTO'}
               </button>
               <p className="text-center text-[10px] text-slate-500 mt-4 italic">
-                {state.isGenerating ? 'Mixing pixels with light...' : 'Uses approx. 1,000 credits'}
+                {state.isGenerating ? 'Mixing pixels with light...' : 'Uses approx. 2,500 credits'}
               </p>
             </div>
           </aside>

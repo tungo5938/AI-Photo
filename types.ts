@@ -8,14 +8,13 @@ export enum AspectRatio {
 }
 
 export enum ModelId {
-  FLASH = 'gemini-2.5-flash-image',
   PRO = 'gemini-3-pro-image-preview',
 }
 
 export interface PromptTemplate {
   id: string;
   name: string;
-  category: 'Studio' | 'Lifestyle' | 'Nature' | 'Artistic';
+  category: 'Studio' | 'In Use' | 'Flatlay' | 'Floating' | 'Ingredient' | 'Contextual';
   prompt: string;
   previewUrl: string;
 }

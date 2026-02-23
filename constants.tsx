@@ -3,56 +3,51 @@ import { PromptTemplate, AspectRatio, ModelId } from './types';
 
 export const PROMPT_TEMPLATES: PromptTemplate[] = [
   {
-    id: 'studio-white',
-    name: 'Pure White Studio',
+    id: 'studio',
+    name: 'Professional Studio',
     category: 'Studio',
-    prompt: 'on a clean, pure white professional studio background with soft overhead lighting and subtle floor reflections',
+    prompt: 'Transform this casual product photo into professional e-commerce imagery: Replace mixed lighting with soft, even studio lighting (daylight 5500K-6500K). Pure white background (#FFFFFF), remove floral pattern completely. Position shorts on professional hanger, centered with natural draping. Remove all wrinkles. Sharp focus, straight-on angle, high resolution (2000x2000px minimum). Enhance heather grey fabric texture and drawstring details. Accurate color reproduction, balanced exposure, no color casts. Clean minimalist style matching Zara/H&M standards. Square 1:1 aspect ratio.',
     previewUrl: 'https://picsum.photos/seed/studio/200/200',
   },
   {
-    id: 'marble-lux',
-    name: 'Marble Luxury',
-    category: 'Lifestyle',
-    prompt: 'placed on a premium white marble pedestal, high-end bathroom background, soft morning sunlight, elegant atmosphere',
-    previewUrl: 'https://picsum.photos/seed/marble/200/200',
+    id: 'in-use',
+    name: 'Product In Use',
+    category: 'In Use',
+    prompt: 'being used in a real-world scenario, natural hand holding the product, lifestyle setting, soft focus background',
+    previewUrl: 'https://picsum.photos/seed/inuse/200/200',
   },
   {
-    id: 'forest-vibe',
-    name: 'Wild Forest',
-    category: 'Nature',
-    prompt: 'resting on a moss-covered damp rock in a misty pine forest, soft dappled sunlight through tree leaves, organic and natural',
-    previewUrl: 'https://picsum.photos/seed/forest/200/200',
+    id: 'flatlay',
+    name: 'Elegant Flatlay',
+    category: 'Flatlay',
+    prompt: 'top-down flatlay composition on a textured linen surface, surrounded by minimalist props, soft side lighting',
+    previewUrl: 'https://picsum.photos/seed/flatlay/200/200',
   },
   {
-    id: 'beach-sand',
-    name: 'Tropical Beach',
-    category: 'Nature',
-    prompt: 'on a pristine sandy beach with turquoise ocean waves in the background, bright sunny day, vacation vibes',
-    previewUrl: 'https://picsum.photos/seed/beach/200/200',
+    id: 'floating',
+    name: 'Zero Gravity',
+    category: 'Floating',
+    prompt: 'floating in mid-air against a dreamlike gradient background, ethereal lighting, particles in the air, surreal atmosphere',
+    previewUrl: 'https://picsum.photos/seed/floating/200/200',
   },
   {
-    id: 'nordic-minimal',
-    name: 'Nordic Interior',
-    category: 'Lifestyle',
-    prompt: 'on a light oak wooden table in a bright Scandinavian minimalist living room, soft linen textures, afternoon sun',
-    previewUrl: 'https://picsum.photos/seed/nordic/200/200',
+    id: 'ingredient',
+    name: 'Ingredient Splash',
+    category: 'Ingredient',
+    prompt: 'surrounded by fresh raw ingredients, water splashes, dynamic composition, high-speed photography style',
+    previewUrl: 'https://picsum.photos/seed/ingredient/200/200',
   },
   {
-    id: 'cyberpunk',
-    name: 'Cyberpunk Neon',
-    category: 'Artistic',
-    prompt: 'on a wet asphalt surface at night, illuminated by vibrant blue and magenta neon lights, futuristic cityscape background',
-    previewUrl: 'https://picsum.photos/seed/neon/200/200',
+    id: 'contextual',
+    name: 'Contextual Concept',
+    category: 'Contextual',
+    prompt: 'placed in a highly conceptual environment, abstract shapes, dramatic lighting, artistic and bold',
+    previewUrl: 'https://picsum.photos/seed/context/200/200',
   }
 ];
 
-export const MODEL_OPTIONS = [
-  { id: ModelId.FLASH, name: 'Gemini 2.5 Flash', desc: 'Fast & Efficient' },
-  { id: ModelId.PRO, name: 'Gemini 3 Pro (High Quality)', desc: 'Best Detail' },
-];
-
 export const ASPECT_RATIOS = [
-  { id: AspectRatio.SQUARE, icon: 'square' },
-  { id: AspectRatio.LANDSCAPE, icon: 'rectangle' },
-  { id: AspectRatio.PORTRAIT, icon: 'stay_current_portrait' },
+  { id: AspectRatio.SQUARE, icon: 'square', label: '1:1' },
+  { id: AspectRatio.LANDSCAPE, icon: 'rectangle', label: '16:9' },
+  { id: AspectRatio.PORTRAIT, icon: 'stay_current_portrait', label: '9:16' },
 ];

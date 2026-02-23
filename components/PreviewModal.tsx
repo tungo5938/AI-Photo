@@ -60,8 +60,8 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({ record, onClose }) =
 
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-border pb-4">
-              <span className="text-xs text-slate-400">Model</span>
-              <span className="text-xs font-bold text-white uppercase">{record.model.replace('gemini-', '')}</span>
+              <span className="text-xs text-slate-400">Quality</span>
+              <span className="text-xs font-bold text-white uppercase">ULTRA HD</span>
             </div>
             <div className="flex items-center justify-between border-b border-border pb-4">
               <span className="text-xs text-slate-400">Resolution</span>

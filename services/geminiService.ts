@@ -37,7 +37,7 @@ export const generateProductImage = async (
 
   try {
     const response: GenerateContentResponse = await ai.models.generateContent({
-      model: config.model,
+      model: ModelId.PRO,
       contents: {
         parts: [
           {
@@ -72,8 +72,8 @@ export const generateProductImage = async (
       throw new Error("No image data returned from Gemini API");
     }
 
-    // Mock token calculation (since API doesn't return exact tokens for images in this version)
-    const tokens = config.model === ModelId.PRO ? 2500 : 1000;
+    // Mock token calculation
+    const tokens = 2500;
 
     return {
       imageUrl: generatedImageUrl,
@@ -81,7 +81,7 @@ export const generateProductImage = async (
     };
   } catch (error: any) {
     console.error("Gemini Generation Error:", error);
-    if (error?.message?.includes("Requested entity was not found")) {
+    if (error?.message?.includes("Requested entity was not found") || error?.message?.includes("API key not found")) {
       // Reset key selection if Pro model fails
       if (typeof window !== 'undefined' && (window as any).aistudio) {
         await (window as any).aistudio.openSelectKey();

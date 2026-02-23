@@ -43,7 +43,7 @@ export const HistoryGrid: React.FC<HistoryGridProps> = ({ history, onSelect }) =
                   {new Date(record.timestamp).toLocaleDateString()}
                 </span>
                 <span className="text-[10px] font-bold text-primary px-1.5 py-0.5 bg-primary/10 rounded">
-                  {record.model.includes('pro') ? 'PRO' : 'FLASH'}
+                  PRO
                 </span>
               </div>
             </div>

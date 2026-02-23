@@ -1,7 +1,5 @@
 {
-  "name": "SnapStudio AI",
-  "description": "A professional AI product photography platform that transforms casual product shots into high-end e-commerce imagery using Gemini AI.",
-  "requestFramePermissions": [
-    "camera"
-  ]
+  "name": "Shot AI",
+  "description": "A professional AI product photography platform that transforms casual product shots into high-end e-commerce imagery using advanced AI.",
+  "requestFramePermissions": []
 }
